@@ -269,7 +269,7 @@ function startStudySession(deckId) {
 }
 
 // ============================================================================
-// JSPDF EXPORT
+// PDF EXPORT (via print dialog)
 // ============================================================================
 
 async function exportDeckToPDF(deckId) {
@@ -279,102 +279,266 @@ async function exportDeckToPDF(deckId) {
         return;
     }
 
-    const jsPDF = globalThis.jspdf?.jsPDF;
-    if (!jsPDF) {
-        alert('jsPDF не завантажено. Перевірте підключення та перезавантажте сторінку.');
+    // Create a printable HTML document
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+        alert('Не вдалося відкрити вікно для друку. Перевірте налаштування блокувальника спливаючих вікон.');
         return;
     }
-    const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-    });
 
-    // A4: 210 x 297 mm
-    const pageWidth = 210;
-    const pageHeight = 297;
-    const margin = 10;
-    const cols = 3;
-    const rows = 3;
-    const gutter = 2;
+    const cardsPerPage = 6; // 2 columns x 3 rows
+    const totalPages = Math.ceil(deck.cards.length / cardsPerPage);
 
-    const cardWidth = (pageWidth - 2 * margin - (cols - 1) * gutter) / cols;
-    const cardHeight = (pageHeight - 2 * margin - (rows - 1) * gutter) / rows;
+    let cardsHTML = '';
 
-    pdf.setFont('Helvetica'); // Fallback for now; Noto Sans not embedded due to size
-
-    let pageNum = 0;
-
-    // Fronts
-    for (let i = 0; i < deck.cards.length; i += cols * rows) {
-        pageNum++;
-        let cardNum = 0;
-
-        for (let row = 0; row < rows && i + cardNum < deck.cards.length; row++) {
-            for (let col = 0; col < cols && i + cardNum < deck.cards.length; col++) {
-                const card = deck.cards[i + cardNum];
-                const x = margin + col * (cardWidth + gutter);
-                const y = margin + row * (cardHeight + gutter);
-
-                // Draw border
-                pdf.rect(x, y, cardWidth, cardHeight);
-
-                // Draw front text
-                pdf.setFontSize(11);
-                const lines = pdf.splitTextToSize(card.front, cardWidth - 4);
-                const textY = y + cardHeight / 2 - (lines.length * 2.5) / 2;
-                pdf.text(lines, x + 2, textY, { maxWidth: cardWidth - 4, align: 'center' });
-
-                cardNum++;
-            }
-        }
-
-        if (i + cols * rows < deck.cards.length) {
-            pdf.addPage();
-        }
+    for (let i = 0; i < deck.cards.length; i++) {
+        const card = deck.cards[i];
+        cardsHTML += `
+            <div class="card">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <div class="card-label">Питання</div>
+                        <div class="card-text">${escapeHtml(card.front)}</div>
+                        <div class="card-number">${i + 1}</div>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
-    // Backs (reverse order for duplex printing)
-    pdf.addPage();
-    pageNum++;
-    let backIndex = deck.cards.length - 1;
-
-    while (backIndex >= 0) {
-        let cardNum = 0;
-
-        for (let row = 0; row < rows && backIndex >= 0; row++) {
-            for (let col = 0; col < cols && backIndex >= 0; col++) {
-                const card = deck.cards[backIndex];
-                const x = margin + col * (cardWidth + gutter);
-                const y = margin + row * (cardHeight + gutter);
-
-                // Draw border
-                pdf.rect(x, y, cardWidth, cardHeight);
-
-                // Draw back text with visual distinction
-                pdf.setTextColor(102, 126, 234); // blue
-                pdf.setFontSize(10);
-                const lines = pdf.splitTextToSize(card.back, cardWidth - 4);
-                const textY = y + cardHeight / 2 - (lines.length * 2.5) / 2;
-                pdf.text(lines, x + 2, textY, { maxWidth: cardWidth - 4, align: 'center' });
-                pdf.setTextColor(0, 0, 0);
-
-                backIndex--;
-                cardNum++;
-            }
-        }
-
-        if (backIndex >= 0) {
-            pdf.addPage();
-        }
+    // Also generate backs
+    let backsHTML = '';
+    for (let i = 0; i < deck.cards.length; i++) {
+        const card = deck.cards[i];
+        backsHTML += `
+            <div class="card card-back-side">
+                <div class="card-inner">
+                    <div class="card-back">
+                        <div class="card-label">Відповідь</div>
+                        <div class="card-text">${escapeHtml(card.back)}</div>
+                        <div class="card-number">${i + 1}</div>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
-    const safeName = deck.name
-        .trim()
-        .split(/\s+/)
-        .filter(Boolean)
-        .join('_');
-    pdf.save(`${safeName || 'deck'}.pdf`);
+    const html = `
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>${escapeHtml(deck.name)} - Флеш-картки</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 24px;
+            color: #333;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 18px;
+            color: #333;
+            margin: 40px 0 20px;
+            padding-top: 20px;
+            border-top: 2px solid #ddd;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+
+        .card-inner {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-front .card-label {
+            color: #00d1b2;
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .card-back .card-label {
+            color: #3273dc;
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .card-text {
+            flex: 1;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #333;
+            display: flex;
+            align-items: center;
+        }
+
+        .card-number {
+            text-align: right;
+            font-size: 11px;
+            color: #999;
+            margin-top: 12px;
+        }
+
+        .card-back-side {
+            background: linear-gradient(135deg, #f8f9ff 0%, #fff 100%);
+            border-color: #3273dc;
+        }
+
+        .print-btn {
+            display: block;
+            margin: 30px auto;
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            background: #00d1b2;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .print-btn:hover {
+            background: #00c4a7;
+        }
+
+        .instructions {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #fff3cd;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #856404;
+        }
+
+        .instructions h3 {
+            margin-bottom: 10px;
+        }
+
+        .instructions ul {
+            margin-left: 20px;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            h1, .subtitle, .print-btn, .instructions {
+                display: none;
+            }
+
+            .section-title {
+                margin-top: 0;
+                padding-top: 0;
+                border-top: none;
+                page-break-before: always;
+            }
+
+            .section-title:first-of-type {
+                page-break-before: avoid;
+            }
+
+            .cards-grid {
+                gap: 10px;
+            }
+
+            .card {
+                border-width: 1px;
+                min-height: 150px;
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>${escapeHtml(deck.name)}</h1>
+    <p class="subtitle">${deck.cards.length} карток</p>
+
+    <div class="instructions">
+        <h3>📄 Інструкція з друку:</h3>
+        <ul>
+            <li>Натисніть кнопку "Друкувати" нижче</li>
+            <li>У діалозі друку оберіть "Зберегти як PDF" для збереження файлу</li>
+            <li>Спочатку друкуються питання, потім — відповіді</li>
+            <li>Для двостороннього друку: роздрукуйте питання, переверніть папір, роздрукуйте відповіді</li>
+        </ul>
+    </div>
+
+    <button class="print-btn" onclick="window.print()">🖨️ Друкувати / Зберегти PDF</button>
+
+    <h2 class="section-title">📝 Питання (лицьова сторона)</h2>
+    <div class="cards-grid">
+        ${cardsHTML}
+    </div>
+
+    <h2 class="section-title">💡 Відповіді (зворотна сторона)</h2>
+    <div class="cards-grid">
+        ${backsHTML}
+    </div>
+
+    <button class="print-btn" onclick="window.print()">🖨️ Друкувати / Зберегти PDF</button>
+</body>
+</html>
+    `;
+
+    printWindow.document.write(html);
+    printWindow.document.close();
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 // ============================================================================
