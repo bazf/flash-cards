@@ -865,12 +865,6 @@ document.getElementById('csvFileInput')?.addEventListener('change', async (e) =>
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Update file name display for Bulma file input
-    const fileNameEl = document.getElementById('csvFileName');
-    if (fileNameEl) {
-        fileNameEl.textContent = file.name;
-    }
-
     const text = await file.text();
     const cards = parseCSV(text);
 
@@ -879,16 +873,15 @@ document.getElementById('csvFileInput')?.addEventListener('change', async (e) =>
         return;
     }
 
-    const deckName = file.name.replace('.csv', '');
+    // Create a friendly deck name - prompt user or use generic name
+    const defaultName = `Моя колода ${new Date().toLocaleDateString('uk-UA')}`;
+    const deckName = prompt('Введіть назву колоди:', defaultName) || defaultName;
     const deckId = `deck-${Date.now()}`;
 
     await importDeck(cards, deckId, deckName);
     alert(UI_TEXT.importedOk(deckName, cards.length));
 
     e.target.value = '';
-    if (fileNameEl) {
-        fileNameEl.textContent = 'Файл не обрано';
-    }
     renderDeckSelection();
 });
 

@@ -29,7 +29,13 @@
         <div class="container">
             <div class="navbar-brand">
                 <a class="navbar-item has-text-weight-semibold" href="#" id="homeBrand">
-                    📚 Флеш-картки
+                    <svg class="brand-icon" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <rect x="2" y="4" width="20" height="16" rx="2" fill="#00d1b2" />
+                        <rect x="4" y="6" width="16" height="12" rx="1" fill="white" />
+                        <path d="M8 10h8M8 14h5" stroke="#00d1b2" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                    Флеш-картки
                 </a>
             </div>
             <div class="navbar-end">
@@ -61,17 +67,24 @@
 
                 <div id="uploadSection" class="box mb-4">
                     <h2 class="title is-6 mb-3">Завантажити CSV</h2>
-                    <div class="file has-name is-fullwidth">
+                    <div class="file is-primary is-boxed is-centered">
                         <label class="file-label">
                             <input class="file-input" type="file" id="csvFileInput" accept=".csv">
                             <span class="file-cta">
-                                <span class="file-label">Обрати файл…</span>
+                                <span class="file-icon">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M12 4v12m0-12L8 8m4-4l4 4" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round" />
+                                        <path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke="currentColor"
+                                            stroke-width="2" stroke-linecap="round" />
+                                    </svg>
+                                </span>
+                                <span class="file-label">Обрати CSV файл…</span>
                             </span>
-                            <span class="file-name" id="csvFileName">Файл не обрано</span>
                         </label>
                     </div>
-                    <p class="help">CSV: 2 колонки (питання, відповідь). Заголовок не обов'язковий. Підтримуються лапки
-                        та UTF-8.</p>
+                    <p class="help has-text-centered">2 колонки: питання, відповідь. UTF-8.</p>
                 </div>
 
                 <div id="userDecksContainer" class="box is-hidden">

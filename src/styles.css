@@ -54,6 +54,18 @@ body {
     font-weight: 500;
 }
 
+/* Brand icon styling */
+.brand-icon {
+    margin-right: 0.5rem;
+    flex-shrink: 0;
+}
+
+#homeBrand {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
 /* Container max-width */
 .section>.container {
     max-width: 900px;
