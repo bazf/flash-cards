@@ -1,0 +1,14 @@
+[
+    {
+        "id": "flashcards-1",
+        "name": "Flashcards (1)",
+        "filename": "flashcards (1).csv",
+        "description": "Default deck 1"
+    },
+    {
+        "id": "flashcards-2",
+        "name": "Flashcards (2)",
+        "filename": "flashcards (2).csv",
+        "description": "Default deck 2"
+    }
+]

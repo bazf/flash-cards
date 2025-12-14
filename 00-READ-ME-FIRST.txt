@@ -1,0 +1,18 @@
+🚀 START HERE
+=============
+
+Your FlashCards PWA app is **ready to use**!
+
+Quick Start (3 steps):
+1. Run: python3 -m http.server 8000 --directory src
+2. Open: http://localhost:8000
+3. Start studying!
+
+For detailed instructions, read:
+→ GET_STARTED.md (quick guide)
+→ README.md (full documentation)
+→ INDEX.md (navigation guide)
+
+Need help? Check QUICKSTART.md for common questions.
+
+Good luck learning! 📚
