@@ -1,73 +1,113 @@
 /* ============================================================================
-   FLASHCARDS APP - Bulma Theme
-   Clean, modern UI with Bulma CSS framework
+   FLASHCARDS APP - Clean, Light, Readable UI
    ============================================================================ */
+
+/* Google Fonts - clean, readable typeface */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-    /* Bulma-inspired colors */
-    --color-bg: #f5f5f5;
+    /* Light neutral palette */
+    --color-bg: #f8fafc;
     --color-surface: #ffffff;
-    --color-surface-alt: #fafafa;
-    --color-border: #dbdbdb;
+    --color-surface-alt: #f1f5f9;
+    --color-border: #e2e8f0;
+    --color-border-light: #f1f5f9;
 
-    /* Text */
-    --color-text: #363636;
-    --color-text-secondary: #7a7a7a;
-    --color-text-muted: #b5b5b5;
+    /* Text colors */
+    --color-text: #1e293b;
+    --color-text-secondary: #64748b;
+    --color-text-muted: #94a3b8;
 
-    /* Bulma accent */
-    --color-primary: #00d1b2;
-    --color-primary-dark: #00c4a7;
-    --color-info: #3e8ed0;
-    --color-success: #48c78e;
-    --color-warning: #ffe08a;
-    --color-danger: #f14668;
+    /* Accent colors */
+    --color-primary: #3b82f6;
+    --color-primary-hover: #2563eb;
+    --color-success: #22c55e;
+    --color-danger: #ef4444;
+    --color-warning: #f59e0b;
 
     /* Shadows */
-    --shadow-sm: 0 0.5em 1em -0.125em rgba(10, 10, 10, 0.1), 0 0 0 1px rgba(10, 10, 10, 0.02);
-    --shadow-md: 0 0.5em 1.5em -0.125em rgba(10, 10, 10, 0.12), 0 0 0 1px rgba(10, 10, 10, 0.02);
-    --shadow-lg: 0 1em 2em -0.125em rgba(10, 10, 10, 0.15), 0 0 0 1px rgba(10, 10, 10, 0.02);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
 
     /* Radii */
-    --radius: 6px;
-    --radius-lg: 12px;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
 }
 
-/* ============================================================================
-   BASE STYLES
-   ============================================================================ */
+* {
+    box-sizing: border-box;
+}
 
 body {
-    font-family: 'Inter', BlinkMacSystemFont, -apple-system, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background: var(--color-bg);
+    color: var(--color-text);
     min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* Navbar tweaks */
-.navbar.is-fixed-top {
+/* Override Bootstrap navbar for cleaner look */
+.navbar {
+    background: var(--color-surface) !important;
     border-bottom: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
 }
 
-.navbar-item {
-    font-weight: 500;
+.navbar-brand {
+    color: var(--color-text) !important;
+    font-weight: 600;
+    font-size: 1.1rem;
 }
 
-/* Container max-width */
-.section>.container {
+.navbar-brand:hover {
+    color: var(--color-primary) !important;
+}
+
+main {
     max-width: 900px;
+    padding: 1.5rem 1rem;
+}
+
+/* Page header styling */
+.view h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin-bottom: 0.25rem;
+}
+
+.text-body-secondary {
+    color: var(--color-text-secondary) !important;
 }
 
 /* ============================================================================
-   BOX / SURFACE STYLING
+   CARDS / SURFACES
    ============================================================================ */
 
-.box {
+.app-surface,
+.card {
     background: var(--color-surface);
-    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
     box-shadow: var(--shadow-sm);
-    border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.card-body {
+    padding: 1.25rem;
+}
+
+/* Section headings inside cards */
+.card h2.h5 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 1rem;
 }
 
 /* ============================================================================
@@ -77,11 +117,9 @@ body {
 .deck-tile {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    padding: 1.25rem;
-    cursor: pointer;
+    border-radius: var(--radius-md);
     transition: all 0.2s ease;
-    height: 100%;
+    cursor: pointer;
 }
 
 .deck-tile:hover {
@@ -90,15 +128,28 @@ body {
     transform: translateY(-2px);
 }
 
-.deck-tile .deck-title {
-    font-size: 1rem;
+.deck-tile .card-body {
+    padding: 1rem;
+}
+
+.deck-tile h3.h6 {
+    font-size: 0.95rem;
     font-weight: 600;
     color: var(--color-text);
     margin-bottom: 0.25rem;
 }
 
+.deck-tile .badge {
+    font-size: 0.65rem;
+    font-weight: 500;
+    padding: 0.25em 0.5em;
+    background: var(--color-surface-alt) !important;
+    color: var(--color-text-secondary) !important;
+    border: 1px solid var(--color-border);
+}
+
 .deck-tile .deck-meta {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: var(--color-text-secondary);
     margin-bottom: 0.75rem;
 }
@@ -111,7 +162,7 @@ body {
 
 .deck-tile .kpi {
     background: var(--color-surface-alt);
-    border-radius: var(--radius);
+    border-radius: var(--radius-sm);
     padding: 0.6rem 0.5rem;
     text-align: center;
 }
@@ -130,32 +181,30 @@ body {
 }
 
 /* ============================================================================
-   STAT BOXES
+   STATS BOXES (Deck Stats View)
    ============================================================================ */
 
 .stat-box {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    padding: 1.5rem 1rem;
+    border-radius: var(--radius-md);
+    padding: 1.25rem 1rem;
     text-align: center;
     box-shadow: var(--shadow-sm);
 }
 
 .stat-number {
-    font-size: 2.25rem;
+    font-size: 2rem;
     font-weight: 700;
     color: var(--color-primary);
-    line-height: 1.1;
+    line-height: 1.2;
 }
 
 .stat-label {
     font-size: 0.8rem;
     color: var(--color-text-secondary);
-    margin-top: 0.5rem;
+    margin-top: 0.35rem;
     font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.025em;
 }
 
 /* ============================================================================
@@ -165,13 +214,13 @@ body {
 .card-container {
     display: flex;
     justify-content: center;
-    padding: 1.5rem 0;
+    padding: 1rem 0;
 }
 
 .flashcard {
     width: 100%;
     max-width: 640px;
-    height: clamp(280px, 48vh, 440px);
+    height: clamp(260px, 45vh, 420px);
     perspective: 1200px;
     cursor: pointer;
     border: 0;
@@ -223,12 +272,12 @@ body {
 
 .flashcard-back {
     transform: rotateY(180deg);
-    background: linear-gradient(180deg, #e8f8f5, var(--color-surface));
-    border-color: var(--color-primary);
+    background: linear-gradient(180deg, #eff6ff, var(--color-surface));
+    border-color: #bfdbfe;
 }
 
 .flashcard-content {
-    font-size: clamp(1rem, 2.2vw, 1.35rem);
+    font-size: clamp(1rem, 2vw, 1.25rem);
     line-height: 1.7;
     color: var(--color-text);
     max-width: 55ch;
@@ -243,81 +292,120 @@ body {
     font-weight: 500;
 }
 
-/* ============================================================================
-   BUTTONS TWEAKS
-   ============================================================================ */
-
-.buttons.is-centered {
+.study-actions {
+    display: flex;
+    gap: 0.5rem;
     justify-content: center;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    margin: 1rem 0;
 }
 
-.button {
+.study-actions .btn {
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-sm);
+}
+
+/* ============================================================================
+   BUTTONS - Override Bootstrap for cleaner look
+   ============================================================================ */
+
+.btn {
     font-family: inherit;
     font-weight: 500;
-    border-radius: var(--radius);
+    border-radius: var(--radius-sm);
     transition: all 0.15s ease;
 }
 
-.button.is-primary {
-    background-color: var(--color-primary);
-    border-color: transparent;
+.btn-primary {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
 }
 
-.button.is-primary:hover {
-    background-color: var(--color-primary-dark);
+.btn-primary:hover {
+    background: var(--color-primary-hover);
+    border-color: var(--color-primary-hover);
 }
 
-.button.is-ghost {
+.btn-outline-secondary {
     color: var(--color-text-secondary);
+    border-color: var(--color-border);
 }
 
-.button.is-ghost:hover {
+.btn-outline-secondary:hover {
     background: var(--color-surface-alt);
+    border-color: var(--color-border);
+    color: var(--color-text);
+}
+
+.btn-link {
+    color: var(--color-text-secondary);
+    text-decoration: none;
+}
+
+.btn-link:hover {
     color: var(--color-text);
 }
 
 /* ============================================================================
-   FILE INPUT
+   FORM ELEMENTS
    ============================================================================ */
 
-.file-name {
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
+.form-control {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    padding: 0.6rem 0.75rem;
+}
+
+.form-control:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.form-text {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    margin-top: 0.5rem;
 }
 
 /* ============================================================================
-   TAGS
+   BADGES
    ============================================================================ */
 
-.tag.is-light {
-    background: var(--color-surface-alt);
-    color: var(--color-text-secondary);
+.badge {
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.35em 0.65em;
+    border-radius: 6px;
+}
+
+.badge.text-bg-light {
+    background: var(--color-surface-alt) !important;
+    color: var(--color-text-secondary) !important;
 }
 
 /* ============================================================================
-   RESPONSIVE
+   RESPONSIVE ADJUSTMENTS
    ============================================================================ */
 
-@media (max-width: 768px) {
-    .section {
-        padding: 1.5rem 1rem;
+@media (max-width: 575.98px) {
+    main {
+        padding: 1rem 0.75rem;
     }
 
-    .level.is-mobile {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.75rem;
+    .card-body {
+        padding: 1rem;
     }
 
-    .level-right {
-        margin-top: 0;
+    .study-actions .btn {
+        flex: 1 1 auto;
+        min-width: 44%;
     }
 
     .flashcard {
-        height: clamp(260px, 52vh, 400px);
+        height: clamp(240px, 50vh, 380px);
     }
 
     .flashcard-face {
@@ -329,29 +417,15 @@ body {
     }
 
     .stat-number {
-        font-size: 1.75rem;
+        font-size: 1.5rem;
     }
 
-    .buttons {
-        flex-direction: column;
-        width: 100%;
-    }
-
-    .buttons .button {
-        width: 100%;
-    }
-
-    #studyActions .button,
-    #viewerActions .button {
-        width: auto;
-        flex: 1;
+    .stat-label {
+        font-size: 0.7rem;
     }
 }
 
-/* ============================================================================
-   PRINT STYLES
-   ============================================================================ */
-
+/* Print Styles */
 @media print {
     body {
         background: white;
@@ -366,7 +440,7 @@ body {
     #modeBadge,
     #sessionStats,
     #cardCounter,
-    .button {
+    .btn {
         display: none !important;
     }
 
@@ -377,14 +451,28 @@ body {
         box-shadow: none;
     }
 
-    .section {
+    main {
         padding: 0;
     }
-}
 
-/* ============================================================================
-   ACCESSIBILITY - Reduced motion
-   ============================================================================ */
+    .print-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10mm;
+        padding: 10mm;
+    }
+
+    .print-card {
+        width: 100%;
+        aspect-ratio: 3.5 / 2;
+        border: 1px solid #333;
+        padding: 10mm;
+        font-size: 12pt;
+        page-break-inside: avoid;
+        break-inside: avoid;
+        overflow: hidden;
+    }
+}
 
 @media (prefers-reduced-motion: reduce) {
     .flashcard-inner {
@@ -402,99 +490,48 @@ body {
 
 @media (prefers-color-scheme: dark) {
     :root {
-        --color-bg: #1a1a2e;
-        --color-surface: #16213e;
-        --color-surface-alt: #1f2b4a;
-        --color-border: #2d3a5a;
-        --color-text: #e5e5e5;
-        --color-text-secondary: #a0a0a0;
-        --color-text-muted: #6b6b6b;
+        --color-bg: #0f172a;
+        --color-surface: #1e293b;
+        --color-surface-alt: #334155;
+        --color-border: #334155;
+        --color-border-light: #475569;
+        --color-text: #f1f5f9;
+        --color-text-secondary: #94a3b8;
+        --color-text-muted: #64748b;
     }
 
-    body {
-        background: var(--color-bg);
-        color: var(--color-text);
-    }
-
-    .navbar.is-white {
+    .navbar {
         background: var(--color-surface) !important;
         border-color: var(--color-border) !important;
     }
 
-    .navbar-item {
+    .navbar-brand {
         color: var(--color-text) !important;
-    }
-
-    .box {
-        background: var(--color-surface);
-        border-color: var(--color-border);
-    }
-
-    .deck-tile {
-        background: var(--color-surface);
-        border-color: var(--color-border);
-    }
-
-    .stat-box {
-        background: var(--color-surface);
-        border-color: var(--color-border);
-    }
-
-    .flashcard-face {
-        background: var(--color-surface);
-        border-color: var(--color-border);
-        color: var(--color-text);
     }
 
     .flashcard-back {
-        background: linear-gradient(180deg, #1a3a3a, var(--color-surface));
-        border-color: var(--color-primary);
+        background: linear-gradient(180deg, #1e3a5f, var(--color-surface));
+        border-color: #3b82f6;
     }
 
-    .title,
-    .subtitle {
-        color: var(--color-text) !important;
-    }
-
-    .subtitle.has-text-grey {
-        color: var(--color-text-secondary) !important;
-    }
-
-    .button.is-light {
-        background: var(--color-surface-alt);
+    .form-control {
+        background: var(--color-surface);
         border-color: var(--color-border);
         color: var(--color-text);
     }
 
-    .button.is-light:hover {
-        background: var(--color-border);
-    }
-
-    .button.is-ghost {
-        color: var(--color-text-secondary);
-    }
-
-    .tag.is-light {
-        background: var(--color-surface-alt);
-        color: var(--color-text-secondary);
-    }
-
-    .file-cta,
-    .file-name {
-        background: var(--color-surface-alt);
-        border-color: var(--color-border);
+    .form-control:focus {
+        background: var(--color-surface);
         color: var(--color-text);
     }
 
-    .help {
-        color: var(--color-text-muted);
+    .btn-outline-secondary {
+        color: var(--color-text-secondary);
+        border-color: var(--color-border);
     }
-}
 
-/* ============================================================================
-   UTILITY: HIDDEN CLASS (Bulma uses is-hidden)
-   ============================================================================ */
-
-.is-hidden {
-    display: none !important;
+    .btn-outline-secondary:hover {
+        background: var(--color-surface-alt);
+        color: var(--color-text);
+    }
 }

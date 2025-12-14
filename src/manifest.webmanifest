@@ -1,7 +1,7 @@
 {
-    "name": "FlashCards - Leitner System",
-    "short_name": "FlashCards",
-    "description": "Learn with the Leitner spaced repetition system. Offline-capable flashcard app with PDF export.",
+    "name": "Флеш-картки — Система Лейтнера",
+    "short_name": "Флеш-картки",
+    "description": "Навчання за системою Лейтнера (інтервальне повторення). Працює офлайн, підтримує експорт у PDF.",
     "start_url": "/",
     "scope": "/",
     "display": "standalone",

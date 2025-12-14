@@ -22,6 +22,21 @@ let appState = {
     currentCardIndex: 0,
     sessionCards: [],
     sessionStats: { correct: 0, wrong: 0 },
+    sessionMode: 'study', // 'study' | 'view'
+    revealed: false,
+};
+
+const UI_TEXT = {
+    deckNotFound: 'Колоду не знайдено',
+    noCardsToExport: 'Немає карток для експорту',
+    noCardsInDeck: 'У колоді немає карток',
+    noDueToday: 'Немає карток для повторення сьогодні!',
+    importedOk: (name, count) => `Колоду «${name}» імпортовано (${count} карток).`,
+    invalidCsv: 'У CSV не знайдено коректних карток (потрібно 2 колонки).',
+    resetConfirm: 'Скинути весь прогрес для цієї колоди?',
+    deleteConfirm: 'Видалити цю колоду назавжди?',
+    quitConfirm: 'Вийти з поточної сесії?',
+    sessionComplete: (ok, bad) => `Сесію завершено!\nПравильно: ${ok}\nПомилок: ${bad}`,
 };
 
 // ============================================================================
@@ -85,23 +100,31 @@ function parseCSVLine(line) {
     let current = '';
     let inQuotes = false;
 
-    for (let i = 0; i < line.length; i++) {
+    let i = 0;
+    while (i < line.length) {
         const char = line[i];
         const nextChar = line[i + 1];
 
         if (char === '"') {
             if (inQuotes && nextChar === '"') {
                 current += '"';
-                i++;
-            } else {
-                inQuotes = !inQuotes;
+                i += 2;
+                continue;
             }
-        } else if (char === ',' && !inQuotes) {
+            inQuotes = !inQuotes;
+            i += 1;
+            continue;
+        }
+
+        if (char === ',' && !inQuotes) {
             result.push(current);
             current = '';
-        } else {
-            current += char;
+            i += 1;
+            continue;
         }
+
+        current += char;
+        i += 1;
     }
 
     result.push(current);
@@ -169,7 +192,6 @@ function getStats(deckId) {
     if (!deck) return null;
 
     const now = Date.now();
-    const dayMs = 86400000;
     let dueCount = 0;
     let learnedCount = 0;
     let newCount = 0;
@@ -253,11 +275,15 @@ function startStudySession(deckId) {
 async function exportDeckToPDF(deckId) {
     const deck = getDeck(deckId);
     if (!deck || deck.cards.length === 0) {
-        alert('No cards to export');
+        alert(UI_TEXT.noCardsToExport);
         return;
     }
 
-    const jsPDF = window.jspdf.jsPDF;
+    const jsPDF = globalThis.jspdf?.jsPDF;
+    if (!jsPDF) {
+        alert('jsPDF не завантажено. Перевірте підключення та перезавантажте сторінку.');
+        return;
+    }
     const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
@@ -277,7 +303,6 @@ async function exportDeckToPDF(deckId) {
 
     pdf.setFont('Helvetica'); // Fallback for now; Noto Sans not embedded due to size
 
-    let cardIndex = 0;
     let pageNum = 0;
 
     // Fronts
@@ -344,7 +369,12 @@ async function exportDeckToPDF(deckId) {
         }
     }
 
-    pdf.save(`${deck.name.replace(/\s+/g, '_')}.pdf`);
+    const safeName = deck.name
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .join('_');
+    pdf.save(`${safeName || 'deck'}.pdf`);
 }
 
 // ============================================================================
@@ -352,9 +382,9 @@ async function exportDeckToPDF(deckId) {
 // ============================================================================
 
 function showView(viewId) {
-    document.querySelectorAll('section[id$="View"]').forEach(s => (s.style.display = 'none'));
+    document.querySelectorAll('.view').forEach(s => s.classList.add('is-hidden'));
     const view = document.getElementById(viewId);
-    if (view) view.style.display = 'block';
+    if (view) view.classList.remove('is-hidden');
 }
 
 async function renderDeckSelection() {
@@ -369,30 +399,34 @@ async function renderDeckSelection() {
         defaultContainer.innerHTML = '';
 
         for (const deckInfo of defaultDecks) {
-            const deckCard = document.createElement('div');
-            deckCard.className = 'deck-card';
-            deckCard.innerHTML = `
-                <h3>${deckInfo.name}</h3>
-                <small>${deckInfo.description}</small>
-                <div class="stats" id="stats-${deckInfo.id}">
-                    <div class="stat">
-                        <div class="stat-value">0</div>
-                        <div>Total</div>
+            const col = document.createElement('div');
+            col.className = 'column is-12-mobile is-6-tablet is-4-desktop';
+            col.innerHTML = `
+                <div class="deck-tile">
+                    <div class="is-flex is-justify-content-space-between is-align-items-start mb-2">
+                        <span class="deck-title">${deckInfo.name}</span>
+                        <span class="tag is-light is-small">CSV</span>
                     </div>
-                    <div class="stat">
-                        <div class="stat-value">0</div>
-                        <div>Due</div>
+                    <div class="deck-meta">${deckInfo.description ?? ''}</div>
+                    <div class="deck-kpis" id="stats-${deckInfo.id}">
+                        <div class="kpi">
+                            <div class="value">0</div>
+                            <div class="small">Всього</div>
+                        </div>
+                        <div class="kpi">
+                            <div class="value">0</div>
+                            <div class="small">До повторення</div>
+                        </div>
                     </div>
                 </div>
             `;
-            deckCard.style.cursor = 'pointer';
 
-            deckCard.addEventListener('click', async () => {
+            col.querySelector('.deck-tile')?.addEventListener('click', async () => {
                 await loadDefaultDeck(deckInfo);
                 await showDeckStats(deckInfo.id);
             });
 
-            defaultContainer.appendChild(deckCard);
+            defaultContainer.appendChild(col);
 
             // Load stats for default deck
             const stats = getStats(deckInfo.id);
@@ -400,13 +434,13 @@ async function renderDeckSelection() {
                 const statsEl = document.getElementById(`stats-${deckInfo.id}`);
                 if (statsEl) {
                     statsEl.innerHTML = `
-                        <div class="stat">
-                            <div class="stat-value">${stats.total}</div>
-                            <div>Total</div>
+                        <div class="kpi">
+                            <div class="value">${stats.total}</div>
+                            <div class="small">Всього</div>
                         </div>
-                        <div class="stat">
-                            <div class="stat-value">${stats.due}</div>
-                            <div>Due</div>
+                        <div class="kpi">
+                            <div class="value">${stats.due}</div>
+                            <div class="small">До повторення</div>
                         </div>
                     `;
                 }
@@ -421,7 +455,7 @@ async function renderDeckSelection() {
     const userDeckIds = Object.keys(storage.decks).filter(id => !id.startsWith('flashcards-'));
 
     if (userDeckIds.length > 0) {
-        document.getElementById('userDecksContainer').style.display = 'block';
+        document.getElementById('userDecksContainer').classList.remove('is-hidden');
         const userContainer = document.getElementById('userDecksList');
         userContainer.innerHTML = '';
 
@@ -429,26 +463,30 @@ async function renderDeckSelection() {
             const deck = storage.decks[deckId];
             const stats = getStats(deckId);
 
-            const deckCard = document.createElement('div');
-            deckCard.className = 'deck-card';
-            deckCard.innerHTML = `
-                <h3>${deck.name}</h3>
-                <small>${deck.cardOrder.length} cards</small>
-                <div class="stats">
-                    <div class="stat">
-                        <div class="stat-value">${stats?.total || 0}</div>
-                        <div>Total</div>
+            const col = document.createElement('div');
+            col.className = 'column is-12-mobile is-6-tablet is-4-desktop';
+            col.innerHTML = `
+                <div class="deck-tile">
+                    <div class="is-flex is-justify-content-space-between is-align-items-start mb-2">
+                        <span class="deck-title">${deck.name}</span>
+                        <span class="tag is-info is-light is-small">Моя</span>
                     </div>
-                    <div class="stat">
-                        <div class="stat-value">${stats?.due || 0}</div>
-                        <div>Due</div>
+                    <div class="deck-meta">${deck.cardOrder.length} карток</div>
+                    <div class="deck-kpis">
+                        <div class="kpi">
+                            <div class="value">${stats?.total || 0}</div>
+                            <div class="small">Всього</div>
+                        </div>
+                        <div class="kpi">
+                            <div class="value">${stats?.due || 0}</div>
+                            <div class="small">До повторення</div>
+                        </div>
                     </div>
                 </div>
             `;
-            deckCard.style.cursor = 'pointer';
-            deckCard.addEventListener('click', () => showDeckStats(deckId));
 
-            userContainer.appendChild(deckCard);
+            col.querySelector('.deck-tile')?.addEventListener('click', () => showDeckStats(deckId));
+            userContainer.appendChild(col);
         }
     }
 }
@@ -461,19 +499,19 @@ async function loadDefaultDeck(deckInfo) {
             .map(c => /[a-zA-Z0-9._-]/.test(c) ? c : encodeURIComponent(c))
             .join('');
 
-        const response = await fetch(`decks/${deckInfo.filename}`);
+        const response = await fetch(`decks/${encodedFilename}`);
         const csvText = await response.text();
         const cards = parseCSV(csvText);
 
         if (cards.length === 0) {
-            alert('No cards found in deck');
+            alert(UI_TEXT.noCardsInDeck);
             return;
         }
 
-        await importDeck(cards, deckInfo.id, deckInfo.name, `decks/${deckInfo.filename}`);
+        await importDeck(cards, deckInfo.id, deckInfo.name, `decks/${encodedFilename}`);
     } catch (error) {
         console.error('Error loading default deck:', error);
-        alert('Error loading deck: ' + error.message);
+        alert('Помилка завантаження колоди: ' + error.message);
     }
 }
 
@@ -483,14 +521,14 @@ async function showDeckStats(deckId) {
     const stats = getStats(deckId);
 
     if (!deck || !stats) {
-        alert('Deck not found');
+        alert(UI_TEXT.deckNotFound);
         return;
     }
 
     showView('deckStatsView');
 
     document.getElementById('deckNameDisplay').textContent = deck.name;
-    document.getElementById('deckSourceDisplay').textContent = deck.sourceUrl || 'Uploaded deck';
+    document.getElementById('deckSourceDisplay').textContent = '';
 
     document.getElementById('totalCards').textContent = stats.total;
     document.getElementById('dueCards').textContent = stats.due;
@@ -498,25 +536,68 @@ async function showDeckStats(deckId) {
     document.getElementById('newCards').textContent = stats.new;
 }
 
-function showStudyView() {
+function setSessionMode(mode) {
+    appState.sessionMode = mode;
+    const badge = document.getElementById('modeBadge');
+    const hint = document.getElementById('modeHint');
+    const studyActions = document.getElementById('studyActions');
+    const viewerActions = document.getElementById('viewerActions');
+    const sessionStats = document.getElementById('sessionStats');
+
+    if (mode === 'view') {
+        badge.textContent = 'Перегляд';
+        badge.className = 'tag is-info';
+        hint.textContent = 'Гортайте картки. Натисніть на картку, щоб перевернути. ←/→ на клавіатурі.';
+        studyActions.classList.add('is-hidden');
+        viewerActions.classList.remove('is-hidden');
+        sessionStats.textContent = '';
+    } else {
+        badge.textContent = 'Навчання';
+        badge.className = 'tag is-primary';
+        hint.textContent = 'Покажіть відповідь і оцініть себе. Клавіші: 1=Знову, 2=Складно, 3=Добре, 4=Легко.';
+        studyActions.classList.remove('is-hidden');
+        viewerActions.classList.add('is-hidden');
+    }
+}
+
+function startDeckSession(mode) {
     const deckId = appState.currentDeck;
     const deck = getDeck(deckId);
+    if (!deck) {
+        alert(UI_TEXT.deckNotFound);
+        return;
+    }
 
-    const sessionCards = startStudySession(deckId);
-
+    const sessionCards = mode === 'study' ? startStudySession(deckId) : deck.cards.slice();
     if (sessionCards.length === 0) {
-        alert('No cards due today!');
+        alert(mode === 'study' ? UI_TEXT.noDueToday : UI_TEXT.noCardsInDeck);
         return;
     }
 
     appState.sessionCards = sessionCards;
     appState.currentCardIndex = 0;
     appState.sessionStats = { correct: 0, wrong: 0 };
+    appState.revealed = false;
 
     showView('studyView');
     document.getElementById('studyDeckName').textContent = deck.name;
-
+    setSessionMode(mode);
     showCard();
+}
+
+function showStudyView() {
+    startDeckSession('study');
+}
+
+function showViewerView() {
+    startDeckSession('view');
+}
+
+function setFlipped(flipped) {
+    const cardEl = document.getElementById('flashcard');
+    if (!cardEl) return;
+    cardEl.classList.toggle('is-flipped', flipped);
+    appState.revealed = flipped;
 }
 
 function showCard() {
@@ -526,27 +607,41 @@ function showCard() {
     document.getElementById('cardQuestion').textContent = card.front;
     document.getElementById('cardAnswer').textContent = card.back;
 
-    // Reset reveal
-    document.querySelector('.flashcard-front').style.display = 'flex';
-    document.querySelector('.flashcard-back').style.display = 'none';
-    document.getElementById('revealBtn').style.display = 'block';
-    document.querySelectorAll('.study-actions button:not(#revealBtn):not(#quitStudyBtn)').forEach(btn => {
-        btn.style.display = 'none';
-    });
+    // Reset flip & actions
+    setFlipped(false);
+    const revealBtn = document.getElementById('revealBtn');
+    if (revealBtn) {
+        revealBtn.textContent = appState.sessionMode === 'view' ? 'Перевернути' : 'Показати відповідь';
+        revealBtn.classList.remove('is-hidden');
+    }
+
+    // Study-mode grading buttons
+    const gradeBtns = ['againBtn', 'hardBtn', 'goodBtn', 'easyBtn'].map(id => document.getElementById(id));
+    gradeBtns.forEach(btn => btn?.classList.add('is-hidden'));
 
     // Update counter
     const total = appState.sessionCards.length;
     const current = appState.currentCardIndex + 1;
     document.getElementById('cardCounter').textContent = `${current} / ${total}`;
-    document.getElementById('sessionStats').textContent = `✓ ${appState.sessionStats.correct} ✗ ${appState.sessionStats.wrong}`;
+    if (appState.sessionMode === 'study') {
+        document.getElementById('sessionStats').textContent = `✓ ${appState.sessionStats.correct}  ✗ ${appState.sessionStats.wrong}`;
+    } else {
+        document.getElementById('sessionStats').textContent = '';
+    }
 }
 
 function revealCard() {
-    document.querySelector('.flashcard-front').style.display = 'none';
-    document.querySelector('.flashcard-back').style.display = 'flex';
-    document.getElementById('revealBtn').style.display = 'none';
-    document.querySelectorAll('.study-actions button:not(#quitStudyBtn)').forEach(btn => {
-        btn.style.display = 'inline-block';
+    if (appState.sessionMode === 'view') {
+        setFlipped(!appState.revealed);
+        return;
+    }
+
+    setFlipped(true);
+    const revealBtn = document.getElementById('revealBtn');
+    revealBtn?.classList.add('is-hidden');
+
+    ['againBtn', 'hardBtn', 'goodBtn', 'easyBtn'].forEach(id => {
+        document.getElementById(id)?.classList.remove('is-hidden');
     });
 }
 
@@ -571,8 +666,31 @@ function reviewAndNext(grade) {
 
 function finishSession() {
     const stats = appState.sessionStats;
-    alert(`Session complete!\nCorrect: ${stats.correct}\nWrong: ${stats.wrong}`);
+    alert(UI_TEXT.sessionComplete(stats.correct, stats.wrong));
     renderDeckSelection();
+}
+
+function nextCard() {
+    if (appState.currentCardIndex < appState.sessionCards.length - 1) {
+        appState.currentCardIndex++;
+        showCard();
+    }
+}
+
+function prevCard() {
+    if (appState.currentCardIndex > 0) {
+        appState.currentCardIndex--;
+        showCard();
+    }
+}
+
+function shuffleCards() {
+    // Keep current card visible by re-finding it after shuffle
+    const current = appState.sessionCards[appState.currentCardIndex];
+    appState.sessionCards = appState.sessionCards.slice().sort(() => Math.random() - 0.5);
+    const newIndex = appState.sessionCards.findIndex(c => c.cardId === current?.cardId);
+    appState.currentCardIndex = Math.max(0, newIndex);
+    showCard();
 }
 
 // ============================================================================
@@ -583,11 +701,17 @@ document.getElementById('csvFileInput')?.addEventListener('change', async (e) =>
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Update file name display for Bulma file input
+    const fileNameEl = document.getElementById('csvFileName');
+    if (fileNameEl) {
+        fileNameEl.textContent = file.name;
+    }
+
     const text = await file.text();
     const cards = parseCSV(text);
 
     if (cards.length === 0) {
-        alert('No valid cards found in CSV');
+        alert(UI_TEXT.invalidCsv);
         return;
     }
 
@@ -595,18 +719,22 @@ document.getElementById('csvFileInput')?.addEventListener('change', async (e) =>
     const deckId = `deck-${Date.now()}`;
 
     await importDeck(cards, deckId, deckName);
-    alert(`Deck "${deckName}" imported with ${cards.length} cards!`);
+    alert(UI_TEXT.importedOk(deckName, cards.length));
 
     e.target.value = '';
+    if (fileNameEl) {
+        fileNameEl.textContent = 'Файл не обрано';
+    }
     renderDeckSelection();
 });
 
 document.getElementById('backToDeckBtn')?.addEventListener('click', renderDeckSelection);
 document.getElementById('startStudyBtn')?.addEventListener('click', showStudyView);
+document.getElementById('viewCardsBtn')?.addEventListener('click', showViewerView);
 document.getElementById('printPdfBtn')?.addEventListener('click', () => exportDeckToPDF(appState.currentDeck));
 
 document.getElementById('resetDeckBtn')?.addEventListener('click', () => {
-    if (confirm('Reset all progress for this deck?')) {
+    if (confirm(UI_TEXT.resetConfirm)) {
         const storage = getStorageData();
         const deck = storage.decks[appState.currentDeck];
         if (deck) {
@@ -628,7 +756,7 @@ document.getElementById('resetDeckBtn')?.addEventListener('click', () => {
 });
 
 document.getElementById('deleteDeckBtn')?.addEventListener('click', () => {
-    if (confirm('Delete this deck permanently?')) {
+    if (confirm(UI_TEXT.deleteConfirm)) {
         const storage = getStorageData();
         const deck = storage.decks[appState.currentDeck];
         if (deck) {
@@ -643,7 +771,25 @@ document.getElementById('deleteDeckBtn')?.addEventListener('click', () => {
     }
 });
 
-document.getElementById('flashcard')?.addEventListener('click', revealCard);
+document.getElementById('flashcard')?.addEventListener('click', () => {
+    if (appState.sessionMode === 'study') {
+        if (!appState.revealed) revealCard();
+    } else {
+        revealCard();
+    }
+});
+
+document.getElementById('flashcard')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        if (appState.sessionMode === 'study') {
+            if (!appState.revealed) revealCard();
+        } else {
+            revealCard();
+        }
+    }
+});
+
 document.getElementById('revealBtn')?.addEventListener('click', revealCard);
 
 document.getElementById('againBtn')?.addEventListener('click', () => reviewAndNext(0));
@@ -652,10 +798,52 @@ document.getElementById('goodBtn')?.addEventListener('click', () => reviewAndNex
 document.getElementById('easyBtn')?.addEventListener('click', () => reviewAndNext(5));
 
 document.getElementById('quitStudyBtn')?.addEventListener('click', () => {
-    if (confirm('Quit study session?')) {
-        renderDeckSelection();
-    }
+    if (confirm(UI_TEXT.quitConfirm)) renderDeckSelection();
 });
+
+document.getElementById('prevBtn')?.addEventListener('click', prevCard);
+document.getElementById('nextBtn')?.addEventListener('click', nextCard);
+document.getElementById('shuffleBtn')?.addEventListener('click', shuffleCards);
+
+// Keyboard shortcuts in session view
+document.addEventListener('keydown', (e) => {
+    const studyView = document.getElementById('studyView');
+    if (!studyView || studyView.classList.contains('d-none')) return;
+
+    if (e.key === 'ArrowLeft') {
+        if (appState.sessionMode === 'view') prevCard();
+        return;
+    }
+    if (e.key === 'ArrowRight') {
+        if (appState.sessionMode === 'view') nextCard();
+        return;
+    }
+
+    if (appState.sessionMode !== 'study') return;
+    if (!appState.revealed) return;
+
+    if (e.key === '1') reviewAndNext(0);
+    if (e.key === '2') reviewAndNext(1);
+    if (e.key === '3') reviewAndNext(3);
+    if (e.key === '4') reviewAndNext(5);
+});
+
+// Simple swipe navigation for view mode
+let touchStartX = null;
+document.getElementById('flashcard')?.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches?.[0]?.clientX ?? null;
+}, { passive: true });
+
+document.getElementById('flashcard')?.addEventListener('touchend', (e) => {
+    if (appState.sessionMode !== 'view') return;
+    const endX = e.changedTouches?.[0]?.clientX ?? null;
+    if (touchStartX == null || endX == null) return;
+    const dx = endX - touchStartX;
+    if (Math.abs(dx) < 50) return;
+    if (dx > 0) prevCard();
+    else nextCard();
+    touchStartX = null;
+}, { passive: true });
 
 // ============================================================================
 // PWA SERVICE WORKER REGISTRATION
@@ -674,11 +862,11 @@ if ('serviceWorker' in navigator) {
                     if (newWorker.state === 'activated') {
                         const updateBtn = document.getElementById('updateBtn');
                         if (updateBtn) {
-                            updateBtn.style.display = 'block';
-                            updateBtn.addEventListener('click', () => {
+                            updateBtn.classList.remove('is-hidden');
+                            updateBtn.onclick = () => {
                                 newWorker.postMessage({ type: 'SKIP_WAITING' });
-                                window.location.reload();
-                            });
+                                globalThis.location.reload();
+                            };
                         }
                     }
                 });

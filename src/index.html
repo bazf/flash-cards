@@ -1,136 +1,199 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uk">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Leitner Flashcard System - Learn with spaced repetition">
-    <meta name="theme-color" content="#2563eb">
+    <meta name="description" content="Флеш-картки за системою Лейтнера — навчання з інтервальним повторенням">
+    <meta name="theme-color" content="#00d1b2">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="FlashCards">
+    <meta name="apple-mobile-web-app-title" content="Флеш-картки">
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" type="image/png" href="icons/icon-192.png" sizes="192x192">
 
-    <!-- Pico CSS for clean, minimal styling -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <!-- Bulma CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="styles.css">
-    <title>FlashCards - Leitner System</title>
+    <title>Флеш-картки — Система Лейтнера</title>
 </head>
 
 <body>
-    <nav>
-        <ul>
-            <li><strong>📚 FlashCards</strong></li>
-        </ul>
-        <ul>
-            <li><button id="updateBtn" style="display: none;" class="contrast">Update Available</button></li>
-        </ul>
+    <nav class="navbar is-white is-fixed-top has-shadow">
+        <div class="container">
+            <div class="navbar-brand">
+                <a class="navbar-item has-text-weight-semibold" href="#" id="homeBrand">
+                    📚 Флеш-картки
+                </a>
+            </div>
+            <div class="navbar-end">
+                <div class="navbar-item">
+                    <button id="updateBtn" class="button is-warning is-small is-hidden">Доступне оновлення</button>
+                </div>
+            </div>
+        </div>
     </nav>
 
-    <main class="container">
-        <!-- Deck Selection View -->
-        <section id="deckSelectionView" style="display: none;">
-            <h2>Select a Deck</h2>
-
-            <div id="defaultDecksContainer">
-                <h3>Default Decks</h3>
-                <div id="defaultDecksList" class="grid"></div>
-            </div>
-
-            <hr>
-
-            <div id="uploadSection">
-                <h3>Upload Your Deck</h3>
-                <input type="file" id="csvFileInput" accept=".csv" aria-label="Upload CSV deck file">
-                <small>Upload a CSV file with two columns: front and back (no headers required)</small>
-            </div>
-
-            <hr>
-
-            <div id="userDecksContainer" style="display: none;">
-                <h3>My Decks</h3>
-                <div id="userDecksList" class="grid"></div>
-            </div>
-        </section>
-
-        <!-- Deck Stats View -->
-        <section id="deckStatsView" style="display: none;">
-            <div class="deck-header">
-                <div>
-                    <h2 id="deckNameDisplay"></h2>
-                    <small id="deckSourceDisplay"></small>
-                </div>
-                <div class="deck-actions">
-                    <button id="backToDeckBtn">← Back to Decks</button>
-                </div>
-            </div>
-
-            <div class="stats-grid" id="statsGrid">
-                <div class="stat-box">
-                    <div class="stat-number" id="totalCards">0</div>
-                    <div class="stat-label">Total Cards</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-number" id="dueCards">0</div>
-                    <div class="stat-label">Due Today</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-number" id="learnedCards">0</div>
-                    <div class="stat-label">Learned</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-number" id="newCards">0</div>
-                    <div class="stat-label">New</div>
-                </div>
-            </div>
-
-            <div class="deck-actions">
-                <button id="startStudyBtn" class="primary">Start Study Session</button>
-                <button id="printPdfBtn">Print to PDF</button>
-                <button id="resetDeckBtn" class="contrast">Reset Progress</button>
-                <button id="deleteDeckBtn" class="contrast">Delete Deck</button>
-            </div>
-        </section>
-
-        <!-- Study View -->
-        <section id="studyView" style="display: none;">
-            <div class="study-header">
-                <h2 id="studyDeckName"></h2>
-                <div class="study-progress">
-                    <div id="cardCounter">0 / 0</div>
-                    <div id="sessionStats"></div>
-                </div>
-            </div>
-
-            <div class="card-container">
-                <div class="flashcard" id="flashcard">
-                    <div class="flashcard-inner">
-                        <div class="flashcard-front">
-                            <div id="cardQuestion"></div>
-                            <small style="color: #888;">Click to reveal answer</small>
-                        </div>
-                        <div class="flashcard-back" style="display: none;">
-                            <div id="cardAnswer"></div>
+    <main class="section" style="padding-top: 5rem;">
+        <div class="container">
+            <!-- Deck Selection View -->
+            <section id="deckSelectionView" class="view is-hidden">
+                <div class="level is-mobile mb-4">
+                    <div class="level-left">
+                        <div class="level-item">
+                            <div>
+                                <h1 class="title is-4 mb-1">Колоди</h1>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="study-actions">
-                <button id="revealBtn" class="primary">Reveal Answer</button>
-                <button id="againBtn" style="display: none;" class="contrast">Again (0)</button>
-                <button id="hardBtn" style="display: none;">Hard (1)</button>
-                <button id="goodBtn" style="display: none;" class="primary">Good (3)</button>
-                <button id="easyBtn" style="display: none;" class="primary">Easy (5)</button>
-            </div>
+                <div id="defaultDecksContainer" class="box mb-4">
+                    <h2 class="title is-6 mb-4">Стандартні колоди</h2>
+                    <div id="defaultDecksList" class="columns is-multiline"></div>
+                </div>
 
-            <div class="study-footer">
-                <button id="quitStudyBtn">← Quit</button>
-            </div>
-        </section>
+                <div id="uploadSection" class="box mb-4">
+                    <h2 class="title is-6 mb-3">Завантажити CSV</h2>
+                    <div class="file has-name is-fullwidth">
+                        <label class="file-label">
+                            <input class="file-input" type="file" id="csvFileInput" accept=".csv">
+                            <span class="file-cta">
+                                <span class="file-label">Обрати файл…</span>
+                            </span>
+                            <span class="file-name" id="csvFileName">Файл не обрано</span>
+                        </label>
+                    </div>
+                    <p class="help">CSV: 2 колонки (питання, відповідь). Заголовок не обов'язковий. Підтримуються лапки
+                        та UTF-8.</p>
+                </div>
+
+                <div id="userDecksContainer" class="box is-hidden">
+                    <h2 class="title is-6 mb-4">Мої колоди</h2>
+                    <div id="userDecksList" class="columns is-multiline"></div>
+                </div>
+            </section>
+
+            <!-- Deck Stats View -->
+            <section id="deckStatsView" class="view is-hidden">
+                <nav class="level is-mobile mb-4">
+                    <div class="level-left">
+                        <div class="level-item">
+                            <div>
+                                <h2 class="title is-4 mb-1" id="deckNameDisplay">Завантаження…</h2>
+                                <p class="subtitle is-6 has-text-grey" id="deckSourceDisplay"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="level-right">
+                        <div class="level-item">
+                            <button id="backToDeckBtn" class="button is-light">← До колод</button>
+                        </div>
+                    </div>
+                </nav>
+
+                <div class="columns is-multiline mb-4" id="statsGrid">
+                    <div class="column is-6-mobile is-3-tablet">
+                        <div class="stat-box">
+                            <p class="stat-number" id="totalCards">0</p>
+                            <p class="stat-label">Всього</p>
+                        </div>
+                    </div>
+                    <div class="column is-6-mobile is-3-tablet">
+                        <div class="stat-box">
+                            <p class="stat-number" id="dueCards">0</p>
+                            <p class="stat-label">До повторення</p>
+                        </div>
+                    </div>
+                    <div class="column is-6-mobile is-3-tablet">
+                        <div class="stat-box">
+                            <p class="stat-number" id="learnedCards">0</p>
+                            <p class="stat-label">Вивчено</p>
+                        </div>
+                    </div>
+                    <div class="column is-6-mobile is-3-tablet">
+                        <div class="stat-box">
+                            <p class="stat-number" id="newCards">0</p>
+                            <p class="stat-label">Нові</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="buttons">
+                    <button id="startStudyBtn" class="button is-primary">Почати навчання</button>
+                    <button id="viewCardsBtn" class="button is-info is-light">Перегляд карток</button>
+                    <button id="printPdfBtn" class="button is-light">Експорт у PDF</button>
+                    <button id="resetDeckBtn" class="button is-warning is-light">Скинути прогрес</button>
+                    <button id="deleteDeckBtn" class="button is-danger">Видалити колоду</button>
+                </div>
+            </section>
+
+            <!-- Study View -->
+            <section id="studyView" class="view is-hidden">
+                <nav class="level is-mobile mb-4">
+                    <div class="level-left">
+                        <div class="level-item">
+                            <div>
+                                <div class="is-flex is-align-items-center" style="gap: 0.5rem;">
+                                    <h2 class="title is-4 mb-0" id="studyDeckName">Завантаження…</h2>
+                                    <span id="modeBadge" class="tag is-primary">Навчання</span>
+                                </div>
+                                <p class="subtitle is-6 has-text-grey mt-1" id="modeHint">Натисніть на картку або
+                                    кнопку, щоб побачити відповідь.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="level-right">
+                        <div class="level-item">
+                            <div class="tags">
+                                <span class="tag is-light" id="cardCounter">0 / 0</span>
+                                <span class="tag is-light" id="sessionStats"></span>
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+
+                <div class="card-container">
+                    <button class="flashcard" id="flashcard" type="button"
+                        aria-label="Флеш-картка (натисніть щоб перевернути)">
+                        <div class="flashcard-inner">
+                            <div class="flashcard-face flashcard-front">
+                                <div class="flashcard-content" id="cardQuestion"></div>
+                                <div class="flashcard-footer-hint">Торкніться / натисніть, щоб перевернути</div>
+                            </div>
+                            <div class="flashcard-face flashcard-back">
+                                <div class="flashcard-content" id="cardAnswer"></div>
+                                <div class="flashcard-footer-hint">Оцініть себе (0–5) або перейдіть далі</div>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+
+                <div class="buttons is-centered" id="studyActions">
+                    <button id="revealBtn" class="button is-primary is-medium">Показати відповідь</button>
+                    <button id="againBtn" class="button is-danger is-light is-hidden">Знову (0)</button>
+                    <button id="hardBtn" class="button is-warning is-light is-hidden">Складно (1)</button>
+                    <button id="goodBtn" class="button is-success is-hidden">Добре (3)</button>
+                    <button id="easyBtn" class="button is-success is-light is-hidden">Легко (5)</button>
+                </div>
+
+                <div class="buttons is-centered is-hidden" id="viewerActions">
+                    <button id="prevBtn" class="button is-light">← Попередня</button>
+                    <button id="nextBtn" class="button is-light">Наступна →</button>
+                    <button id="shuffleBtn" class="button is-info is-light">Перемішати</button>
+                </div>
+
+                <div class="has-text-centered mt-4">
+                    <button id="quitStudyBtn" class="button is-ghost">← Назад</button>
+                </div>
+            </section>
+        </div>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>

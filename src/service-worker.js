@@ -1,5 +1,5 @@
 // Service Worker for FlashCards PWA
-const CACHE_VERSION = 'flashcards-v1-2025-12-14';
+const CACHE_VERSION = 'flashcards-v2-2025-12-14-bulma';
 const RUNTIME_CACHE = 'flashcards-runtime';
 
 // Files to precache on install
